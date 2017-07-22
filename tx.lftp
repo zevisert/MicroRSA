@@ -1,0 +1,3 @@
+open arm
+put -O /sdcard/home/user3/zevisert/ /home/zevisert/VisualGDB/x/dev/ES/RSA/rsa.exe
+quit

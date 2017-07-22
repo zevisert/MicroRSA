@@ -1,0 +1,3 @@
+open arm
+rm /sdcard/home/user3/zevisert/rsa.exe
+quit
