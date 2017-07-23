@@ -154,6 +154,9 @@
   <ImportedPropertySheets />
   <CodeSense>
     <Enabled>Unknown</Enabled>
+    <CFLAGS />
+    <CXXFLAGS />
+    <ExternalSourceFileList />
     <ExtraSettings>
       <HideErrorsInSystemHeaders>true</HideErrorsInSystemHeaders>
     </ExtraSettings>
