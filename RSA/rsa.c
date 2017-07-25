@@ -37,6 +37,7 @@ int decrypt(int payload, key privkey);
 
 unsigned int bitlen(unsigned long long int x);
 unsigned int mmm(unsigned int X, unsigned int Y, unsigned int M);
+unsigned int mme(unsigned int X, unsigned int E, unsigned int M);
 
 #define BITTST(X, i) ((X & i) != 0)
 
@@ -45,8 +46,14 @@ int main(void)
 	int input = 123;
 	key publkey = { publ_exponent, modulus };
 	key privkey = { priv_exponent, modulus };
-	int output = mmm(17, 22, 23);
-	printf("%d\n", output);
+	int output = mme(4, 13, 497);
+	long long unsigned int llui = -1;
+	long unsigned int lui = -1;
+	unsigned int ui = -1;
+
+	printf("%i\n\n", output);
+
+	printf("On this platform we have:\nllui: %i\nlui: %i\nui: %i\n", bitlen(llui), bitlen(lui), bitlen(ui));
 
 	exit(0);
 } 
@@ -82,6 +89,35 @@ unsigned int bitlen(unsigned long long int x)
 	for (; val != 0; ++bits) val >>= 1;
 	return bits;
 }
+
+unsigned int mme(unsigned int X, unsigned int E, unsigned int M)
+{
+	/* 1. Set c = 1, e = 0. */
+	unsigned int c = 1;
+	unsigned int e = 0;
+
+	/* 2. Increase e by 1. */
+s2: 
+	e += 1;
+	
+	/* 3. Set c = (X * c) mod m. */
+	
+	c = mmm(X, c, M);
+
+	#ifdef VERBOSE
+	printf("e = %i | c = %i\n", e, c);
+	#endif //VERBOSE
+
+	/* 4. If e < E, goto step 2. Else, c contains the correct solution to c = X^E mod M.*/
+	if (e < E)
+	{
+		goto s2;
+	}
+	
+	return c;
+	
+}
+
 
 unsigned int mmm(unsigned int X, unsigned int Y, unsigned int M)
 {
