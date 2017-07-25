@@ -8,6 +8,17 @@ Copyright (C) 2017 Zev Isert
 #include <stdio.h>
 #include <stdlib.h>
 
+// #define VERBOSE
+
+typedef unsigned long long int uint_64;
+typedef unsigned long int uint_32;
+typedef unsigned short int uint_16;
+typedef unsigned char uint_8;
+typedef struct
+{
+	const uint_64 exponent;
+	const uint_64 modulus;
+} key;
 
 
 /* calculate the first prime (P) */
@@ -25,108 +36,93 @@ const unsigned int publ_exponent = 17;
 /* choose the private exponent (D) */
 const unsigned int priv_exponent = 2753;
 
-typedef struct
-{
-	const unsigned int exponent;
-	const unsigned int modulus;
-} key;
 
+uint_64 encrypt(uint_64 payload, key publkey);
+uint_64 decrypt(uint_64 payload, key privkey);
 
-int encrypt(int payload, key publkey);
-int decrypt(int payload, key privkey);
+uint_8 bitlen(uint_64 x);
+uint_64 mmm(uint_64 X, uint_64 Y, uint_64 M);
+uint_64 mme(uint_64 X, uint_64 E, uint_64 M);
 
-unsigned int bitlen(unsigned long long int x);
-unsigned int mmm(unsigned int X, unsigned int Y, unsigned int M);
-unsigned int mme(unsigned int X, unsigned int E, unsigned int M);
-
-#define BITTST(X, i) ((X & i) != 0)
+#define BITAT(X, i) ((X & i) != 0)
 
 int main(void)
 { 
 	int input = 123;
 	key publkey = { publ_exponent, modulus };
 	key privkey = { priv_exponent, modulus };
-	int output = mme(4, 13, 497);
-	long long unsigned int llui = -1;
-	long unsigned int lui = -1;
+	
+	uint_64 llui = -1;
+	uint_32 lui = -1;
 	unsigned int ui = -1;
+	uint_16 sui = -1;
+	uint_8 byte = -1;
 
-	printf("%i\n\n", output);
+	uint_64 output = mme(4, 13, 497);
+	printf("4^13 %% 497 = %llu\nExpected 445 (mme)\n\n", output);
 
-	printf("On this platform we have:\nllui: %i\nlui: %i\nui: %i\n", bitlen(llui), bitlen(lui), bitlen(ui));
+	output = mmm(17, 22, 23);
+	printf("17 * 22 * (sf: -5) %% 23 = %llu \nExpected 16 (mmm)\n\n", output);
+
+	printf("On this platform we have:\n"
+		   "%2i bits: unsigned long long int\n"
+		   "%2i bits: unsigned long int\n"
+		   "%2i bits: unsigned int\n"
+		   "%2i bits: unsigned short int\n"
+		   "%2i bits: unsigned char (byte)\n",
+		   bitlen(llui), bitlen(lui), bitlen(ui), bitlen(sui), bitlen(byte)
+	);
 
 	exit(0);
 } 
 
-int encrypt(int payload, key publkey)
+uint_64 encrypt(uint_64 payload, key publkey)
 {
 	/* output = payload ^ publkey % modulus */
-	long long unsigned int out = payload;
-	register int i = 0;
-	for (; i < publkey.exponent; i += 1)
-	{
-		out *= payload;
-	}
-	return out % publkey.modulus;
+	return mme(payload, publkey.exponent, publkey.modulus);
 }
 
-int decrypt(int payload, key privkey)
+uint_64 decrypt(uint_64 payload, key privkey)
 {
 	/* output = payload ^ privkey % modulus */
-	long long unsigned int out = payload;
-	register int i = 0;
-	for (; i < privkey.exponent; i += 1)
-	{
-		out *= payload;
-	}
-	return out % privkey.modulus;
+	return mme(payload, privkey.exponent, privkey.modulus);
 }
 
-unsigned int bitlen(unsigned long long int x)
+uint_8 bitlen(uint_64 x)
 {
-	unsigned int bits = 0;
-	unsigned long long int val = x;
+	uint_8 bits = 0;
+	uint_64 val = x;
 	for (; val != 0; ++bits) val >>= 1;
 	return bits;
 }
 
-unsigned int mme(unsigned int X, unsigned int E, unsigned int M)
+uint_64 mme(uint_64 X, uint_64 E, uint_64 M)
 {
-	/* 1. Set c = 1, e = 0. */
-	unsigned int c = 1;
-	unsigned int e = 0;
+	uint_64 c = 1;
+	uint_64 e = 1;
 
-	/* 2. Increase e by 1. */
-s2: 
-	e += 1;
-	
-	/* 3. Set c = (X * c) mod m. */
-	
-	c = mmm(X, c, M);
-
-	#ifdef VERBOSE
-	printf("e = %i | c = %i\n", e, c);
-	#endif //VERBOSE
-
-	/* 4. If e < E, goto step 2. Else, c contains the correct solution to c = X^E mod M.*/
-	if (e < E)
+	for (; e <= E; e += 1)
 	{
-		goto s2;
+		//c = mmm(X, c, M);
+		c = (X * c) % M;
+	
+		#ifdef VERBOSE
+		printf("e = %i | c = %i\n", e, c);
+		#endif //VERBOSE
 	}
-	
+
 	return c;
-	
 }
 
 
-unsigned int mmm(unsigned int X, unsigned int Y, unsigned int M)
+uint_64 mmm(uint_64 X, uint_64 Y, uint_64 M)
 {
-	unsigned int m = bitlen(M);
-	unsigned int R = 1 << m;
+	uint_8 m = bitlen(M);
+	uint_64 R = 1 << m;
 
-	unsigned int T = 0;
-	unsigned register int i = 1;
-	unsigned register int nu;
+	uint_64 T = 0;
+	register uint_64 i = 1;
+	register uint_64 nu;
 
 	#ifdef VERBOSE
 	unsigned register int j = 0;
@@ -135,14 +131,14 @@ unsigned int mmm(unsigned int X, unsigned int Y, unsigned int M)
 	for (; i < R; i <<= 1)
 	{
 		/* nu = T(0) OR (X(i) AND Y(0)) where B(n) is the nth bit of B from the right */
-		nu = BITTST(T, 0x1) | (BITTST(X, i) & BITTST(Y, 0x1));
+		nu = BITAT(T, 0x1) | (BITAT(X, i) & BITAT(Y, 0x1));
 	
 		/* T = ( T + X(i) * Y + nu * M ) / 2 */
-		T = (T + BITTST(X, i) * Y + nu * M) >> 1;
+		T = (T + BITAT(X, i) * Y + nu * M) >> 1;
 
 		#ifdef VERBOSE
 		j += 1;
-		printf("i: %d, X(i): %d, nu: %d, T: %d\n", j, BITTST(X, i), nu, T);			  
+		printf("i: %d, X(i): %d, nu: %d, T: %d\n", j, BITAT(X, i), nu, T);			  
 		#endif // VERBOSE
 
 	}
