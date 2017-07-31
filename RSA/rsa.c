@@ -50,43 +50,115 @@ uint_64 mme(uint_64 X, uint_64 E, uint_64 M);
 #define BITAT(X, i) ((X & i) != 0ULL)
 #define MAX3(X, Y, M) X > Y ? X > M ? X : M : Y > M ? Y : M
 
+void funcs(char* func_name, uint_64 X, uint_64 Y, uint_64 M)
+{
+	if (strcmp(func_name, "-mmm") == 0)
+	{
+		uint_64 R_inv = mmm(1, 1, M);
+		printf("mmm(X: %llu, Y: %llu, M: %llu) => %llu * %llu * (sf: %llu) %% %llu => %llu\n", X, Y, M, X, Y, R_inv, M, mmm(X, Y, M));
+	}
+	else if (strcmp(func_name, "-mod") == 0)
+	{
+		printf("mod(X: %llu, E: %llu, M: %llu) => %llu * %llu %% %llu => %llu\n", X, Y, M, X, Y, M, X * Y % M);
+	}
+	else if (strcmp(func_name, "-mmms") == 0)
+	{
+		printf("mmms(X: %llu, Y: %llu, M: %llu) => %llu * %llu %% %llu => %llu\n", X, Y, M, X, Y, M, mmms(X, Y, M));
+	}
+	else if (strcmp(func_name, "-mme") == 0)
+	{
+		printf("mme(X: %llu, E: %llu, M: %llu) => %llu ^ %llu %% %llu => %llu\n", X, Y, M, X, Y, M, mme(X, Y, M));
+	}
+	else if (strcmp(func_name, "-exp") == 0)
+	{
+		printf("exp(X: %llu, E: %llu, M: %llu) => %llu ^ %llu %% %llu => %llu\n", X, Y, M, X, Y, M, exp(X, Y, M));
+	}
+}
+
+void test_platform()
+{
+	printf("On this platform we have:\n"
+	   "%2i bits: unsigned long long int\n"
+	   "%2i bits: unsigned long int\n"
+	   "%2i bits: unsigned int\n"
+	   "%2i bits: unsigned short int\n"
+	   "%2i bits: unsigned char (byte)\n",
+		bitlen((uint_64)-1),
+		bitlen((uint_32)-1),
+		bitlen((unsigned int)-1),
+		bitlen((uint_16)-1),
+		bitlen((uint_8)-1));
+}
+
+void test_bitlen(void)
+{
+	printf("---------------- bitlen tests ----------------\n");
+	printf(" > bitlen(0)                    => %4hu [expected 0]\n", bitlen(0));
+	printf(" > bitlen(1)                    => %4hu [expected 1]\n", bitlen(1));
+	printf(" > bitlen(-1)                   => %4hu [expected 64]\n", bitlen(-1));
+	printf(" > bitlen(0xFFFF)               => %4hu [expected 16]\n", bitlen(0xFFFF));
+	printf(" > bitlen(0x0x2222222222222222) => %4hu [expected 62]\n", bitlen(0x2222222222222222));
+}
+
+void test_mmm(void)
+{
+	printf("----------------- mmm tests ------------------\n");
+	printf(" > mmm(0, 0, 0)                 => %4llu [expected 0]\n", mmm(0, 0, 0));
+	printf(" > mmm(1, 1, 1)                 => %4llu [expected 0]\n", mmm(1, 1, 1));
+	printf(" > mmm(1, 1, 500)               => %4llu [expected 192]\n", mmm(1, 1, 500));
+	printf(" > mmm(17, 22, 23)              => %4llu [expected 16]\n", mmm(17, 22, 23));
+	printf(" > mmm(855, 855, 3233)          => %4llu [expected 2413]\n", mmm(855, 855, 3233));
+}
+
+void test_mmms(void)
+{
+	printf("----------------- mmms tests -----------------\n");
+	printf(" > mmms(0, 0, 1)                => %4llu [expected 0]\n", mmms(0, 0, 1));
+	printf(" > mmms(1, 1, 1)                => %4llu [expected 1]\n", mmms(1, 1, 1));
+	printf(" > mmms(1, 1, 500)              => %4llu [expected 1]\n", mmms(1, 1, 500));
+	printf(" > mmms(17, 22, 23)             => %4llu [expected 6]\n", mmms(17, 22, 23));
+	printf(" > mmms(855, 855, 3233)         => %4llu [expected 367]\n", mmms(855, 855, 3233));
+}
+
+void test_mme(void)
+{
+	printf("----------------- mme tests ------------------\n");
+	printf(" > mme(0, 1, 1)                 => %4llu [expected 0]\n", mme(0, 1, 1));
+	printf(" > mme(1, 1, 1)                 => %4llu [expected 0]\n", mme(1, 1, 1));
+	printf(" > mme(1, 1, 500)               => %4llu [expected 1]\n", mme(1, 1, 500));
+	printf(" > mme(51, 43, 427)             => %4llu [expected 275]\n", mme(51, 43, 427));
+	printf(" > mme(855, 2, 3233)            => %4llu [expected 367]\n", mme(855, 2, 3233));
+	printf(" > mme(123, 17, 3233)           => %4llu [expected 855]\n", mme(123, 17, 3233));
+	printf(" > mme(855, 2753, 3233)         => %4llu [expected 123]\n", mme(855, 2753, 3233));
+}
+
+void run_tests(void)
+{
+	test_platform();
+	test_bitlen();
+	test_mmm();
+	test_mmms();
+	test_mme();
+}
+
 int main(int argc, char** argv)
 { 
 	uint_64 input = 123;
 	key publkey = { publ_exponent, modulus };
 	key privkey = { priv_exponent, modulus };
 	
-	uint_64 llui = -1;
-	uint_32 lui = -1;
-	unsigned int ui = -1;
-	uint_16 sui = -1;
-	uint_8 byte = -1;
-
-	uint_64 output = mme(4, 13, 497);
-	printf("4^13 %% 497 = %llu\nExpected 445 (mme)\n\n", output);
-
-	output = mmm(17, 22, 23);
-	printf("17 * 22 * (sf: 18) %% 23 = %llu \nExpected 16 (mmm)\n\n", output);
-
-	if (argc == 4)
+	if (argc == 5)
 	{
-		uint_64 X = strtoull(argv[1], NULL, 10);
-		uint_64 Y = strtoull(argv[2], NULL, 10);
-		uint_64 M = strtoull(argv[3], NULL, 10);
+		uint_64 X = strtoull(argv[2], NULL, 10);
+		uint_64 Y = strtoull(argv[3], NULL, 10);
+		uint_64 M = strtoull(argv[4], NULL, 10);
 
-		printf("mme(X: %llu, Y: %llu, M: %llu) => %llu\n", X, Y, M, mme(X, Y, M));
+		funcs(argv[1], X, Y, M);
 	}
-
-	#ifdef VERBOSE
-	printf("On this platform we have:\n"
-		   "%2i bits: unsigned long long int\n"
-		   "%2i bits: unsigned long int\n"
-		   "%2i bits: unsigned int\n"
-		   "%2i bits: unsigned short int\n"
-		   "%2i bits: unsigned char (byte)\n",
-		   bitlen(llui), bitlen(lui), bitlen(ui), bitlen(sui), bitlen(byte)
-	);
-	#endif
+	else
+	{
+		run_tests();
+	}
 
 	exit(0);
 } 
@@ -170,6 +242,8 @@ uint_64 mmms(uint_64 X, uint_64 Y, uint_64 M)
 	uint_64 YR = mmm(Y, RR, M);
 	uint_64 ZR = mmm(XR, YR, M);
 	uint_64 Z  = mmm(ZR, 1, M);
+
+	#ifdef VERBOSE
 	printf("mmms chain:\n"
 		"\t XR mmm(X: %3llu, Y: %3llu, M: %3llu) => %3llu\n"
 		"\t YR mmm(X: %3llu, Y: %3llu, M: %3llu) => %3llu\n"
@@ -179,6 +253,8 @@ uint_64 mmms(uint_64 X, uint_64 Y, uint_64 M)
 		Y, RR, M, YR,
 		XR, YR, M, ZR,
 		ZR, 1ULL, M, Z);
+	#endif
+
 	return Z;
 }
 
